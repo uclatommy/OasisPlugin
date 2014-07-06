@@ -2,9 +2,9 @@
 
 namespace UnrealBuildTool.Rules
 {
-	public class BlankPlugin : ModuleRules
+	public class OasisPlugin : ModuleRules
 	{
-		public BlankPlugin(TargetInfo Target)
+		public OasisPlugin(TargetInfo Target)
 		{
 			PublicIncludePaths.AddRange(
 				new string[] {
@@ -14,7 +14,7 @@ namespace UnrealBuildTool.Rules
 
 			PrivateIncludePaths.AddRange(
 				new string[] {
-					"Developer/BlankPlugin/Private",
+					"Developer/OasisPlugin/Private",
 					// ... add other private include paths required here ...
 				}
 				);

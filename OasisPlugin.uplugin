@@ -1,19 +1,19 @@
 {
     "FileVersion" : 3,
 	
-	"FriendlyName" : "Blank Example Plugin",
+	"FriendlyName" : "Oasis Plugin",
 	"Version" : 1,
 	"VersionName" : "1.0",
-	"CreatedBy" : "Epic Games, Inc.",
-	"CreatedByURL" : "http://epicgames.com",
+	"CreatedBy" : "Thomas Chen",
+	"CreatedByURL" : "https://github.com/uclatommy/OasisPlugin",
 	"EngineVersion" : 1579795,
-	"Description" : "An example of a minimal plugin.  This can be used as a starting point when creating your own plugin.",
-	"Category" : "Examples",
+	"Description" : "Provides run-time fluid simulations and effects.",
+	"Category" : "Physics",
 	
     "Modules" :
 	[
 		{
-			"Name" : "BlankPlugin",
+			"Name" : "OasisPlugin",
 			"Type" : "Developer"
 		}
 	]
