@@ -14,7 +14,7 @@
 	[
 		{
 			"Name" : "OasisPlugin",
-			"Type" : "Developer"
+			"Type" : "Runtime"
 		}
 	]
 }
