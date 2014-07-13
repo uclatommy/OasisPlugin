@@ -5,8 +5,36 @@
 AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
 {
-	DynamicTexture = UTexture2D::CreateTransient(512, 512);
-	DynamicTexture->UpdateResourceW();
+	BaseCollisionComponent = PCIP.CreateDefaultSubobject<USphereComponent>(this, TEXT("BaseSphereComponent"));
+	RootComponent = BaseCollisionComponent;
+	SurfaceMesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("SurfaceMesh"));
+	SurfaceMesh->SetSimulatePhysics(false);
+	SurfaceMesh->AttachTo(RootComponent);
+	//WaterMaterialInstance = UMaterialInstanceDynamic::Create(SurfaceMesh->GetMaterial(0), this);
+	PrimaryActorTick.bCanEverTick = true;
+	
+	// create random noise for texture
+	const int SizeX = 512;
+	const int SizeY = 512;
+	static uint8 data[SizeX * SizeY * 4] = { 0 };
+	srand(1982);
+	for (int i = 0; i < SizeX * SizeY * 4; ++i) {
+		data[i] = rand() % 255;
+	}
+
+	OasisWaterTexture = UTexture2D::CreateTransient(SizeX, SizeY);
+	OasisWaterTexture->AddToRoot();
+	OasisWaterTexture->UpdateResource();
+
+	FUpdateTextureRegion2D *r;
+	r = new FUpdateTextureRegion2D(0, 0, 0, 0, SizeX, SizeY);
+	UpdateTextureRegions(OasisWaterTexture, (int32)0, (uint32)1, r, (uint32)(4 * SizeX), (uint32)4, data, false); // Using the UpdateTextureRegions from https://wiki.unrealengine.com/Dynamic_Textures
+	OasisWaterTexture->UpdateResource();
+
+	// update texture property on material and set object to use material
+	//WaterMaterialInstance->SetTextureParameterValue(FName("SurfaceDataTexture"), OasisWaterTexture);
+
+	//SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
 }
 
 void AOasisInteractiveWater::UpdateTextureRegions(UTexture2D* Texture, int32 MipIndex, uint32 NumRegions, FUpdateTextureRegion2D* Regions, uint32 SrcPitch, uint32 SrcBpp, uint8* SrcData, bool bFreeData)
@@ -63,4 +91,37 @@ void AOasisInteractiveWater::UpdateTextureRegions(UTexture2D* Texture, int32 Mip
 			delete RegionData;
 			});
 	}
+}
+
+void AOasisInteractiveWater::Simulate()
+{
+
+	//OasisWaterTexture->UpdateResource();
+	/*
+	const FColor ColorOne = FColor(0, 255, 0);
+	const FColor ColorTwo = FColor(255, 0, 0);
+	const int32 CheckerSize = 512;
+	const int32 HalfPixelNum = CheckerSize >> 1;
+
+	FColor* MipData = static_cast<FColor*>(OasisWaterTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
+	
+	for (int32 RowNum = 0; RowNum < CheckerSize; ++RowNum)
+	{
+		for (int32 ColNum = 0; ColNum < CheckerSize; ++ColNum)
+		{
+			FColor& CurColor = MipData[(ColNum + (RowNum * CheckerSize))];
+
+			if (ColNum < HalfPixelNum)
+			{
+				CurColor = ColorOne;
+			}
+			else
+			{
+				CurColor = ColorTwo;
+			}
+		}
+	}
+	OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
+	OasisWaterTexture->UpdateResource();
+	*/
 }
