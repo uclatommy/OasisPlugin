@@ -1,12 +1,11 @@
 OasisPlugin
 ===========
- The goal is to learn Unreal Engine programming some common fluid dynamic simulation techniques. The result will be wrapped up in a plugin.
- 
- #
- ## To Do:
- * [Sum of Sines](http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html)
- * [Height Field Simulation](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf)
- * [Tessendorf FFT Simulation](http://graphics.ucsd.edu/courses/rendering/2005/jdewall/tessendorf.pdf)
- * [Smooth Particle Hydrodynamics](https://software.intel.com/en-us/articles/fluid-simulation-for-video-games-part-15/)
-   * Probably too computationally intense for real-time, but can still be useful to generate precomputed animated meshes for cinematic sequences.
+The goal is to learn Unreal Engine programming some common fluid dynamic simulation techniques. The result will be wrapped up in a plugin.
+
+## To Do:
+- [ ] [Sum of Sines](http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html)
+- [ ] [Height Field Simulation](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf)
+- [ ] [Tessendorf FFT Simulation](http://graphics.ucsd.edu/courses/rendering/2005/jdewall/tessendorf.pdf)
+- [ ][Smooth Particle Hydrodynamics](https://software.intel.com/en-us/articles/fluid-simulation-for-video-games-part-15/)
+  Probably too computationally intense for real-time, but can still be useful to generate precomputed animated meshes for cinematic sequences.
  
