@@ -1,7 +1,6 @@
 OasisPlugin
 ===========
  The goal is to learn Unreal Engine programming some common fluid dynamic simulation techniques. The result will be wrapped up in a plugin.
-
  ## To Do:
  * [Sum of Sines](http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html)
  * [Height Field Simulation](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf)
