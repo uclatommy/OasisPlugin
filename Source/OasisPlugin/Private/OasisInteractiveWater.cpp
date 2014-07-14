@@ -43,6 +43,7 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 	OasisWaterTexture->AddToRoot();
 	OasisWaterTexture->UpdateResource();
 	textureNeedsUpdate = true;
+	DampingFactor = 0.5f;
 }
 
 void AOasisInteractiveWater::Tick(float DeltaSeconds)
@@ -51,9 +52,9 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 	{
 		FColor *MipData = static_cast<FColor*>(OasisWaterTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
 		int pixelNum = 0;
-		for (int32 r = 0; r < SizeX; ++r)
+		for (int32 r = 0; r < SizeY; ++r)
 		{
-			for (int32 c = 0; c < SizeY; ++c)
+			for (int32 c = 0; c < SizeX; ++c)
 			{
 				pixelNum = c + (r*SizeX);
 				MipData[pixelNum] = FColor(textureData[pixelNum*4], textureData[pixelNum*4 + 1], textureData[pixelNum*4 + 2], textureData[pixelNum*4 + 3]);
@@ -68,10 +69,36 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 }
 
+// http://www.matthiasmueller.info/talks/GDC2008.pdf
 void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 {	
 	//generate a height field
+	int arrayIndex = 0;
+	for (int j = 1; j<SizeY - 1; j++) 
+	{
+		for (int i = 1; i<SizeX - 1; i++)
+		{
+			m_uv[VelocityAt(i,j)] += DeltaSeconds * (m_uv[HeightAt(i - 1, j)] + m_uv[HeightAt(i + 1, j)] + m_uv[HeightAt(i, j - 1)] + m_uv[HeightAt(i, j + 1)])*0.25f - m_uv[HeightAt(i, j)];
+		}
+	}
 
-	//generate the gradient field
+	for (int j = 1; j<SizeY - 1; j++) {
+		for (int i = 1; i<SizeX - 1; i++) {
+			float &v = m_uv[VelocityAt(i, j)];
+			v *= DampingFactor;
+			m_uv[HeightAt(i, j)] += DeltaSeconds*v;
+		}
+	}
+	
 	textureNeedsUpdate = true;
+}
+
+int AOasisInteractiveWater::VelocityAt(int u, int v)
+{
+	return u + v*SizeX + 1;
+}
+
+int AOasisInteractiveWater::HeightAt(int u, int v)
+{
+	return u + v*SizeX;
 }
