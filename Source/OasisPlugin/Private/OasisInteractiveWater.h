@@ -23,7 +23,6 @@ class AOasisInteractiveWater : public AActor
 	int VelocityAt(int u, int v);						//returns the index value used to retrieve Velocity from m_uv
 	int HeightAt(int u, int v);							//returns the index value used to retrieve Height from m_uv
 	void CalculateGradients();
-	void addDisturbance(float x, float y, float r, float s);
 	int RedAt(int u, int v);
 	int GreenAt(int u, int v);
 	int BlueAt(int u, int v);
@@ -35,6 +34,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void Simulate(float DeltaSeconds);
+
+	UFUNCTION(BlueprintCallable, Category = "Oasis")
+		void addDisturbance(float x, float y, float r, float s);
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;

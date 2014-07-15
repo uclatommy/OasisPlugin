@@ -4,7 +4,7 @@
 DEFINE_LOG_CATEGORY(OasisLog);
 
 AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitializeProperties& PCIP)
-	: Super(PCIP), SizeX(512), SizeY(512)
+	: Super(PCIP), SizeX(64), SizeY(64)
 {
 	//BaseCollisionComponent = PCIP.CreateDefaultSubobject<USphereComponent>(this, TEXT("BaseSphereComponent"));
 	//RootComponent = BaseCollisionComponent;
@@ -68,7 +68,7 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 			for (int32 u = 0; u < SizeX; ++u)
 			{
 				pixelNum = u + (v*SizeX);
-				MipData[pixelNum] = FColor(textureData[RedAt(u,v)], textureData[GreenAt(u,v)], textureData[BlueAt(u,v)], textureData[AlphaAt(u,v)]);
+				MipData[pixelNum] = FColor(textureData[RedAt(u, v)], textureData[GreenAt(u, v)], textureData[BlueAt(u, v)], textureData[AlphaAt(u, v)]);
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
@@ -105,9 +105,9 @@ void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 	CalculateGradients();
 	//need to feed m_uv into alpha channel of texture data
 	
-	for (int u = 0; u < SizeX; u++)
+	for (int v = 0; v < SizeY; v++)
 	{
-		for (int v = 0; v < SizeY; v++)
+		for (int u = 0; u < SizeX; u++)
 		{
 			textureData[AlphaAt(u, v)] = (uint8)(m_uv[HeightAt(u, v)]*255);
 		}
@@ -153,12 +153,12 @@ void AOasisInteractiveWater::addDisturbance(float x, float y, float r, float s)
 //index mapping helper functions
 int AOasisInteractiveWater::VelocityAt(int u, int v) //for m_uv indices
 {
-	return u + v*SizeX + 1;
+	return (u + v*SizeX)*2 + 1;
 }
 
 int AOasisInteractiveWater::HeightAt(int u, int v) //for m_uv indices
 {
-	return u + v*SizeX;
+	return (u + v*SizeX)*2;
 }
 
 int AOasisInteractiveWater::ddxAt(int u, int v) //for m_gradients indices
@@ -173,7 +173,7 @@ int AOasisInteractiveWater::ddyAt(int u, int v) //for m_gradient indices
 
 int AOasisInteractiveWater::RedAt(int u, int v) //for textureData indices
 {
-	return u + v*SizeX;
+	return (u + v*SizeX)*4;
 }
 
 int AOasisInteractiveWater::GreenAt(int u, int v) //for textureData indices
