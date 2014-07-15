@@ -25,7 +25,7 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 		switch (i % 4)
 		{
 		case 0: //R channel
-			textureData.Add((uint8)0);
+			textureData.Add((uint8)255);
 			break;
 		case 1: //G channel
 			textureData.Add((uint8)0);
@@ -39,7 +39,18 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 		}
 	}
 
-	OasisWaterTexture = UTexture2D::CreateTransient(SizeX, SizeY, PF_R8G8B8A8);
+	for (int j = 0; j < SizeY; j++)
+	{
+		for (int i = 0; i < SizeX; i++)
+		{
+			m_uv.Add(0);			//this element will hold height at pixel (i,j)
+			m_uv.Add(0);			//this element will hold velocity at pixel (i,j)
+			m_gradients.Add(0);		//this element will hold dz/dx for (i,j)
+			m_gradients.Add(0);		//this element will hold dz/dy for (i,j)
+		}
+	}
+
+	OasisWaterTexture = UTexture2D::CreateTransient(SizeX, SizeY, PF_B8G8R8A8);
 	OasisWaterTexture->AddToRoot();
 	OasisWaterTexture->UpdateResource();
 	textureNeedsUpdate = true;
@@ -52,12 +63,12 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 	{
 		FColor *MipData = static_cast<FColor*>(OasisWaterTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
 		int pixelNum = 0;
-		for (int32 r = 0; r < SizeY; ++r)
+		for (int32 v = 0; v < SizeY; ++v)
 		{
-			for (int32 c = 0; c < SizeX; ++c)
+			for (int32 u = 0; u < SizeX; ++u)
 			{
-				pixelNum = c + (r*SizeX);
-				MipData[pixelNum] = FColor(textureData[pixelNum*4], textureData[pixelNum*4 + 1], textureData[pixelNum*4 + 2], textureData[pixelNum*4 + 3]);
+				pixelNum = u + (v*SizeX);
+				MipData[pixelNum] = FColor(textureData[RedAt(u,v)], textureData[GreenAt(u,v)], textureData[BlueAt(u,v)], textureData[AlphaAt(u,v)]);
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
@@ -73,7 +84,6 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 {	
 	//generate a height field
-	int arrayIndex = 0;
 	for (int j = 1; j<SizeY - 1; j++) 
 	{
 		for (int i = 1; i<SizeX - 1; i++)
@@ -82,23 +92,101 @@ void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 		}
 	}
 
-	for (int j = 1; j<SizeY - 1; j++) {
-		for (int i = 1; i<SizeX - 1; i++) {
+	for (int j = 1; j<SizeY - 1; j++)
+	{
+		for (int i = 1; i<SizeX - 1; i++)
+		{
 			float &v = m_uv[VelocityAt(i, j)];
 			v *= DampingFactor;
 			m_uv[HeightAt(i, j)] += DeltaSeconds*v;
 		}
 	}
 	
+	CalculateGradients();
+	//need to feed m_uv into alpha channel of texture data
+	
+	for (int u = 0; u < SizeX; u++)
+	{
+		for (int v = 0; v < SizeY; v++)
+		{
+			textureData[AlphaAt(u, v)] = (uint8)(m_uv[HeightAt(u, v)]*255);
+		}
+	}
+	
 	textureNeedsUpdate = true;
 }
 
-int AOasisInteractiveWater::VelocityAt(int u, int v)
+void AOasisInteractiveWater::CalculateGradients()
+{
+	for (int j = 1; j<SizeY - 1; j++)
+	{
+		for (int i = 1; i<SizeX - 1; i++)
+		{
+			m_gradients[ddxAt(i,j)] = (m_uv[HeightAt(i + 1, j)] - m_uv[HeightAt(i - 1, j)]);		//dz/dx
+			m_gradients[ddyAt(i,j)] = (m_uv[HeightAt(i, j + 1)] - m_uv[HeightAt(i, j - 1)]);		//dz/dy
+		}
+	}
+}
+
+void AOasisInteractiveWater::addDisturbance(float x, float y, float r, float s)
+{
+	int ix = (int)floorf(x);
+	int iy = (int)floorf(y);
+	int ir = (int)ceilf(r);
+	int sx = FMath::Max<int>(1, ix - ir);
+	int sy = FMath::Max<int>(1, iy - ir);
+	int ex = FMath::Min<int>(ix + ir, SizeX - 2);
+	int ey = FMath::Min<int>(iy + ir, SizeY - 2);
+	for (int j = sy; j <= ey; j++) {
+		for (int i = sx; i <= ex; i++) {
+			float dx = x - i;
+			float dy = y - j;
+			float d = sqrtf(dx*dx + dy*dy);
+			if (d < r) {
+				d = (d / r)*3.0f;
+				m_uv[HeightAt(i, j)] += expf(-d*d)*s;
+			}
+		}
+	}
+}
+
+//index mapping helper functions
+int AOasisInteractiveWater::VelocityAt(int u, int v) //for m_uv indices
 {
 	return u + v*SizeX + 1;
 }
 
-int AOasisInteractiveWater::HeightAt(int u, int v)
+int AOasisInteractiveWater::HeightAt(int u, int v) //for m_uv indices
 {
 	return u + v*SizeX;
+}
+
+int AOasisInteractiveWater::ddxAt(int u, int v) //for m_gradients indices
+{
+	return HeightAt(u, v);
+}
+
+int AOasisInteractiveWater::ddyAt(int u, int v) //for m_gradient indices
+{
+	return VelocityAt(u, v);
+}
+
+int AOasisInteractiveWater::RedAt(int u, int v) //for textureData indices
+{
+	return u + v*SizeX;
+}
+
+int AOasisInteractiveWater::GreenAt(int u, int v) //for textureData indices
+{
+	return RedAt(u, v) + 1;
+}
+
+int AOasisInteractiveWater::BlueAt(int u, int v) //for textureData indices
+{
+	return RedAt(u, v) + 2;
+}
+
+int AOasisInteractiveWater::AlphaAt(int u, int v) //for textureData indices
+{
+	return RedAt(u, v) + 3;
 }
