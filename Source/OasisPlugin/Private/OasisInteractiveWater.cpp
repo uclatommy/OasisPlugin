@@ -48,7 +48,7 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 		{
 			for (int i = 0; i < SizeX; i++)
 			{
-				MipData[i + j*SizeX] = FColor((uint8)(m_uv[HeightAt(i, j)] * 255), 0, 0, 255);
+				MipData[i + j*SizeX] = FColor((uint8)(m_gradients[ddxAt(i, j)] * 255), (uint8)(m_gradients[ddyAt(i, j)] * 255), 255, (uint8)(m_uv[HeightAt(i, j)] * 255));
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
@@ -79,7 +79,6 @@ void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 			float &v = m_uv[VelocityAt(i, j)];
 			v *= DampingFactor;
 			m_uv[HeightAt(i, j)] += DeltaSeconds*v;
-			//m_uv[HeightAt(i, j)] += 0.01;
 		}
 	}
 	
@@ -100,11 +99,11 @@ void AOasisInteractiveWater::CalculateGradients()
 	}
 }
 
-void AOasisInteractiveWater::addDisturbance(float x, float y, float r, float s)
+void AOasisInteractiveWater::addDisturbance(float x, float y, float radius, float strength)
 {
 	int ix = (int)floorf(x);
 	int iy = (int)floorf(y);
-	int ir = (int)ceilf(r);
+	int ir = (int)ceilf(radius);
 	int sx = FMath::Max<int>(1, ix - ir);
 	int sy = FMath::Max<int>(1, iy - ir);
 	int ex = FMath::Min<int>(ix + ir, SizeX - 2);
@@ -114,9 +113,9 @@ void AOasisInteractiveWater::addDisturbance(float x, float y, float r, float s)
 			float dx = x - i;
 			float dy = y - j;
 			float d = sqrtf(dx*dx + dy*dy);
-			if (d < r) {
-				d = (d / r)*3.0f;
-				m_uv[HeightAt(i, j)] += expf(-d*d)*s;
+			if (d < radius) {
+				d = (d / radius)*3.0f;
+				m_uv[HeightAt(i, j)] += expf(-d*d)*(strength);
 			}
 		}
 	}
