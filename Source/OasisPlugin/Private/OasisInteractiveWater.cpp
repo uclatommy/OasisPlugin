@@ -21,24 +21,6 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 
 	RootComponent = SurfaceMesh;
 
-	for (int i = 0; i < SizeX * SizeY * 4; ++i) {
-		switch (i % 4)
-		{
-		case 0: //R channel
-			textureData.Add((uint8)255);
-			break;
-		case 1: //G channel
-			textureData.Add((uint8)0);
-			break;
-		case 2: //B channel
-			textureData.Add((uint8)0);
-			break;
-		case 3: //Alpha
-			textureData.Add((uint8)255);
-			break;
-		}
-	}
-
 	for (int j = 0; j < SizeY; j++)
 	{
 		for (int i = 0; i < SizeX; i++)
@@ -62,13 +44,11 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 	if (textureNeedsUpdate)
 	{
 		FColor *MipData = static_cast<FColor*>(OasisWaterTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
-		int pixelNum = 0;
-		for (int32 v = 0; v < SizeY; ++v)
+		for (int j = 0; j < SizeY; j++)
 		{
-			for (int32 u = 0; u < SizeX; ++u)
+			for (int i = 0; i < SizeX; i++)
 			{
-				pixelNum = u + (v*SizeX);
-				MipData[pixelNum] = FColor(textureData[RedAt(u, v)], textureData[GreenAt(u, v)], textureData[BlueAt(u, v)], textureData[AlphaAt(u, v)]);
+				MipData[i + j*SizeX] = FColor((uint8)(m_uv[HeightAt(i, j)] * 255), 0, 0, 255);
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
@@ -99,19 +79,11 @@ void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 			float &v = m_uv[VelocityAt(i, j)];
 			v *= DampingFactor;
 			m_uv[HeightAt(i, j)] += DeltaSeconds*v;
+			//m_uv[HeightAt(i, j)] += 0.01;
 		}
 	}
 	
 	CalculateGradients();
-	//need to feed m_uv into alpha channel of texture data
-	
-	for (int v = 0; v < SizeY; v++)
-	{
-		for (int u = 0; u < SizeX; u++)
-		{
-			textureData[AlphaAt(u, v)] = (uint8)(m_uv[HeightAt(u, v)]*255);
-		}
-	}
 	
 	textureNeedsUpdate = true;
 }
@@ -169,24 +141,4 @@ int AOasisInteractiveWater::ddxAt(int u, int v) //for m_gradients indices
 int AOasisInteractiveWater::ddyAt(int u, int v) //for m_gradient indices
 {
 	return VelocityAt(u, v);
-}
-
-int AOasisInteractiveWater::RedAt(int u, int v) //for textureData indices
-{
-	return (u + v*SizeX)*4;
-}
-
-int AOasisInteractiveWater::GreenAt(int u, int v) //for textureData indices
-{
-	return RedAt(u, v) + 1;
-}
-
-int AOasisInteractiveWater::BlueAt(int u, int v) //for textureData indices
-{
-	return RedAt(u, v) + 2;
-}
-
-int AOasisInteractiveWater::AlphaAt(int u, int v) //for textureData indices
-{
-	return RedAt(u, v) + 3;
 }

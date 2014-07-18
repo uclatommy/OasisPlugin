@@ -10,9 +10,8 @@ class AOasisInteractiveWater : public AActor
 
 	//private member variables
 	int SizeX, SizeY;									//array dimensions for height field
-	TArray<uint8> textureData;							//array of height data and normals
 	TArray<float> m_uv;									//height and velocity data
-	TArray<float> m_gradients;
+	TArray<float> m_gradients;							//gradients to calc normals
 	UTexture2D *OasisWaterTexture;						//height data stored as texture: RGB->Normals, Alpha->Height
 	UMaterialInterface *MasterMaterialRef;				//reference to parameterized material template
 	UMaterialInstanceDynamic* WaterMaterialInstance;	//reference to parameterized material instance that will be used to manipulate vertex locations and normal map
@@ -23,10 +22,6 @@ class AOasisInteractiveWater : public AActor
 	int VelocityAt(int u, int v);						//returns the index value used to retrieve Velocity from m_uv
 	int HeightAt(int u, int v);							//returns the index value used to retrieve Height from m_uv
 	void CalculateGradients();
-	int RedAt(int u, int v);
-	int GreenAt(int u, int v);
-	int BlueAt(int u, int v);
-	int AlphaAt(int u, int v);
 	int ddxAt(int u, int v);
 	int ddyAt(int u, int v);
 
