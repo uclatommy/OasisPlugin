@@ -44,11 +44,15 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 	if (textureNeedsUpdate)
 	{
 		FColor *MipData = static_cast<FColor*>(OasisWaterTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
+		float DDX, DDY, c;
 		for (int j = 0; j < SizeY; j++)
 		{
 			for (int i = 0; i < SizeX; i++)
 			{
-				MipData[i + j*SizeX] = FColor((uint8)(m_gradients[ddxAt(i, j)] * 255), (uint8)(m_gradients[ddyAt(i, j)] * 255), 255, (uint8)(m_uv[HeightAt(i, j)] * 255));
+				DDX = m_gradients[ddxAt(i, j)];
+				DDY = m_gradients[ddyAt(i, j)];
+				c = 1.0f / sqrtf(DDX*DDX + DDY*DDY + 4.0f);
+				MipData[i + j*SizeX] = FColor((uint8)(((-c * DDX) + 1.0f) / 2.0f * 255), (uint8)(((-c * DDY) + 1.0f) / 2.0f * 255), (uint8)(c * 255), (uint8)(m_uv[HeightAt(i, j)] * 255));
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
