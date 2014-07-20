@@ -4,13 +4,14 @@
 DEFINE_LOG_CATEGORY(OasisLog);
 
 AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitializeProperties& PCIP)
-	: Super(PCIP), SizeX(64), SizeY(64)
+	: Super(PCIP), SizeX(96), SizeY(96)
 {
 	//BaseCollisionComponent = PCIP.CreateDefaultSubobject<USphereComponent>(this, TEXT("BaseSphereComponent"));
 	//RootComponent = BaseCollisionComponent;
 	SurfaceMesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("SurfaceMesh"));
 	SurfaceMesh->SetSimulatePhysics(false);
 	PrimaryActorTick.bCanEverTick = true;
+	//SurfaceColor = FColor(0, 0, 255, 255); //this works, but I can't change the color through details panel!
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> waterMesh(TEXT("StaticMesh'/Game/Shapes/Shape_Plane.Shape_Plane'"));
 	static ConstructorHelpers::FObjectFinder<UMaterial> waterMaterial(TEXT("Material'/Game/Materials/M_Interactive_Water.M_Interactive_Water'"));
@@ -18,25 +19,36 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 	MasterMaterialRef = waterMaterial.Object;
 	SurfaceMesh->SetStaticMesh(waterMesh.Object);
 	WaterMaterialInstance = UMaterialInstanceDynamic::Create(MasterMaterialRef, this);
+	WaterMaterialInstance->SetVectorParameterValue(FName(TEXT("Color")), SurfaceColor);
+	SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
 
 	RootComponent = SurfaceMesh;
 
+	setOasisTexture();
+	//DampingFactor = 0.99f;
+}
+
+void AOasisInteractiveWater::setOasisTexture()
+{
+	TArray<float> new_uv;
+	TArray<float> new_gradients;
 	for (int j = 0; j < SizeY; j++)
 	{
 		for (int i = 0; i < SizeX; i++)
 		{
-			m_uv.Add(0);			//this element will hold height at pixel (i,j)
-			m_uv.Add(0);			//this element will hold velocity at pixel (i,j)
-			m_gradients.Add(0);		//this element will hold dz/dx for (i,j)
-			m_gradients.Add(0);		//this element will hold dz/dy for (i,j)
+			new_uv.Add(0);			//this element will hold height at pixel (i,j)
+			new_uv.Add(0);			//this element will hold velocity at pixel (i,j)
+			new_gradients.Add(0);		//this element will hold dz/dx for (i,j)
+			new_gradients.Add(0);		//this element will hold dz/dy for (i,j)
 		}
 	}
-
+	m_uv = new_uv;
+	m_gradients = new_gradients;
+	
 	OasisWaterTexture = UTexture2D::CreateTransient(SizeX, SizeY, PF_B8G8R8A8);
 	OasisWaterTexture->AddToRoot();
 	OasisWaterTexture->UpdateResource();
 	textureNeedsUpdate = true;
-	DampingFactor = 0.5f;
 }
 
 void AOasisInteractiveWater::Tick(float DeltaSeconds)
@@ -51,8 +63,8 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 			{
 				DDX = m_gradients[ddxAt(i, j)];
 				DDY = m_gradients[ddyAt(i, j)];
-				c = 1.0f / sqrtf(DDX*DDX + DDY*DDY + 4.0f);
-				MipData[i + j*SizeX] = FColor((uint8)(((-c * DDX) + 1.0f) / 2.0f * 255), (uint8)(((-c * DDY) + 1.0f) / 2.0f * 255), (uint8)(c * 255), (uint8)(m_uv[HeightAt(i, j)] * 255));
+				c = 1.0f / (sqrtf(DDX*DDX + DDY*DDY + 1.0f));
+				MipData[i + j*SizeX] = FColor((uint8)(((-c * DDX) + 1.0f) / 2.0f * 255), (uint8)(((-c * DDY) + 1.0f) / 2.0f * 255), (uint8)(c*255), (uint8)(m_uv[HeightAt(i, j)] * 255));
 			}
 		}
 		OasisWaterTexture->PlatformData->Mips[0].BulkData.Unlock();
@@ -65,14 +77,14 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 }
 
 // http://www.matthiasmueller.info/talks/GDC2008.pdf
-void AOasisInteractiveWater::Simulate(float DeltaSeconds)
+void AOasisInteractiveWater::Simulate(float TimeFactor) 
 {	
 	//generate a height field
 	for (int j = 1; j<SizeY - 1; j++) 
 	{
 		for (int i = 1; i<SizeX - 1; i++)
-		{
-			m_uv[VelocityAt(i,j)] += DeltaSeconds * (m_uv[HeightAt(i - 1, j)] + m_uv[HeightAt(i + 1, j)] + m_uv[HeightAt(i, j - 1)] + m_uv[HeightAt(i, j + 1)])*0.25f - m_uv[HeightAt(i, j)];
+		{ 
+			m_uv[VelocityAt(i, j)] += TimeFactor * (m_uv[HeightAt(i - 1, j)] + m_uv[HeightAt(i + 1, j)] + m_uv[HeightAt(i, j - 1)] + m_uv[HeightAt(i, j + 1)])*0.25f - m_uv[HeightAt(i, j)];
 		}
 	}
 
@@ -82,7 +94,7 @@ void AOasisInteractiveWater::Simulate(float DeltaSeconds)
 		{
 			float &v = m_uv[VelocityAt(i, j)];
 			v *= DampingFactor;
-			m_uv[HeightAt(i, j)] += DeltaSeconds*v;
+			m_uv[HeightAt(i, j)] += TimeFactor*v;
 		}
 	}
 	
@@ -123,6 +135,13 @@ void AOasisInteractiveWater::addDisturbance(float x, float y, float radius, floa
 			}
 		}
 	}
+}
+
+void AOasisInteractiveWater::setGridDimensions(int32 sizeX, int32 sizeY)
+{
+	SizeX = sizeX;
+	SizeY = sizeY;
+	setOasisTexture();
 }
 
 //index mapping helper functions

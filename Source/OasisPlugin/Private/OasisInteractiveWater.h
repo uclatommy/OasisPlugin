@@ -9,7 +9,7 @@ class AOasisInteractiveWater : public AActor
 	GENERATED_UCLASS_BODY()
 
 	//private member variables
-	int SizeX, SizeY;									//array dimensions for height field
+	int32 SizeX, SizeY;									//array dimensions for height field
 	TArray<float> m_uv;									//height and velocity data
 	TArray<float> m_gradients;							//gradients to calc normals
 	UTexture2D *OasisWaterTexture;						//height data stored as texture: RGB->Normals, Alpha->Height
@@ -24,23 +24,32 @@ class AOasisInteractiveWater : public AActor
 	void CalculateGradients();
 	int ddxAt(int u, int v);
 	int ddyAt(int u, int v);
+	void setOasisTexture();
 
 public:
-
+	//TimeFactor should be >= 1.0f
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
-		void Simulate(float DeltaSeconds);
+		void Simulate(float TimeFactor); 
 
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void addDisturbance(float x, float y, float r, float s);
 
+	UFUNCTION(BlueprintCallable, Category = "Oasis")
+		void setGridDimensions(int32 sizeX, int32 sizeY);
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Oasis")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
 		float DampingFactor;
-
-	UPROPERTY(BlueprintReadWrite, Category = "Oasis")
-		bool textureNeedsUpdate;							//tells us when to redraw the texture
+	
+	//tells us when to redraw the texture
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Oasis")
+		bool textureNeedsUpdate;							
+	
+	//not currently working
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
+		FLinearColor SurfaceColor;
 
 	//UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 	//	TSubobjectPtr<USphereComponent> BaseCollisionComponent;
