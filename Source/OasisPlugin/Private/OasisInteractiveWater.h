@@ -32,21 +32,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void Simulate(float TimeFactor); 
 
+	//creates a wave originating at x,y in texture space coordinates
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void addDisturbance(float x, float y, float r, float s);
 
+	//sets the dimensions of the fluid texture, should be powers of 2
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void setGridDimensions(int32 sizeX, int32 sizeY);
 
+	//determines distance of Target Actor to this mesh
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
-		float DistanceOfActorToThisMeshSurface(AActor* TargetActor, FVector& ClosestSurfacePoint) const;
+		TArray<float> DistanceOfActorToThisMeshSurface(TArray<AActor*> TargetActor, TArray<FVector> &ClosestSurfacePoint) const;
 
+	//converts world space coordinates to texture space
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void WS2Texture(float InX, float InY, float &outX, float &outY);
 
+	//the fluid mesh
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;
-
+	
+	//determines how long a wave lasts
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
 		float DampingFactor;
 	
@@ -54,10 +60,7 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Oasis")
 		bool textureNeedsUpdate;							
 	
-	//not currently working
+	//sets the surface color
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
 		FLinearColor SurfaceColor;
-
-	//UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
-	//	TSubobjectPtr<USphereComponent> BaseCollisionComponent;
 };

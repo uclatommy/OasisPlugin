@@ -142,13 +142,18 @@ void AOasisInteractiveWater::addDisturbance(float x, float y, float radius, floa
 	}
 }
 
-float AOasisInteractiveWater::DistanceOfActorToThisMeshSurface(AActor* TargetActor, FVector& ClosestSurfacePoint) const
+TArray<float> AOasisInteractiveWater::DistanceOfActorToThisMeshSurface(TArray<AActor*> TargetActors, TArray<FVector> &ClosestSurfacePoints) const
 {
-	if (!TargetActor) return NULL;
-	if (!TargetActor->IsValidLowLevel()) return NULL;
-
 	//Dist of Actor to Surface, retrieve closest Surface Point to Actor
-	return SurfaceMesh->GetDistanceToCollision(TargetActor->GetActorLocation(), ClosestSurfacePoint);
+	ClosestSurfacePoints.Empty();
+	TArray<float> Distances;
+	for (auto it(TargetActors.CreateIterator()); it; ++it)
+	{
+		if (!(*it)->IsValidLowLevel()) continue;
+		ClosestSurfacePoints.Add(FVector(0.0f, 0.0f, 0.0f));
+		Distances.Add(SurfaceMesh->GetDistanceToCollision((*it)->GetActorLocation(), ClosestSurfacePoints.Last()));
+	}
+	return Distances;
 }
 
 void AOasisInteractiveWater::setGridDimensions(int32 sizeX, int32 sizeY)
