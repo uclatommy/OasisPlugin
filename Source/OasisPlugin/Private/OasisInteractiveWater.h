@@ -14,8 +14,7 @@ class AOasisInteractiveWater : public AActor
 	TArray<float> m_gradients;							//gradients to calc normals
 	UTexture2D *OasisWaterTexture;						//height data stored as texture: RGB->Normals, Alpha->Height
 	UMaterialInterface *MasterMaterialRef;				//reference to parameterized material template
-	UMaterialInstanceDynamic* WaterMaterialInstance;	//reference to parameterized material instance that will be used to manipulate vertex locations and normal map
-	
+	UMaterialInstanceDynamic* WaterMaterialInstance;	//reference to parameterized material instance that will be used to manipulate vertex locations and normal map	
 
 	//private member functions
 	virtual void Tick(float DeltaSeconds) override;
@@ -25,6 +24,7 @@ class AOasisInteractiveWater : public AActor
 	int ddxAt(int u, int v);
 	int ddyAt(int u, int v);
 	void setOasisTexture();
+	virtual void PostInitializeComponents() override;
 
 public:
 	//TimeFactor should be >= 1.0f
@@ -36,6 +36,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void setGridDimensions(int32 sizeX, int32 sizeY);
+
+	UFUNCTION(BlueprintCallable, Category = "Oasis")
+		float DistanceOfActorToThisMeshSurface(AActor* TargetActor, FVector& ClosestSurfacePoint) const;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;

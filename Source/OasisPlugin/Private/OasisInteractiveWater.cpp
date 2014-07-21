@@ -11,7 +11,6 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 	SurfaceMesh = PCIP.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("SurfaceMesh"));
 	SurfaceMesh->SetSimulatePhysics(false);
 	PrimaryActorTick.bCanEverTick = true;
-	//SurfaceColor = FColor(0, 0, 255, 255); //this works, but I can't change the color through details panel!
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> waterMesh(TEXT("StaticMesh'/Game/Shapes/Shape_Plane.Shape_Plane'"));
 	static ConstructorHelpers::FObjectFinder<UMaterial> waterMaterial(TEXT("Material'/Game/Materials/M_Interactive_Water.M_Interactive_Water'"));
@@ -19,13 +18,18 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 	MasterMaterialRef = waterMaterial.Object;
 	SurfaceMesh->SetStaticMesh(waterMesh.Object);
 	WaterMaterialInstance = UMaterialInstanceDynamic::Create(MasterMaterialRef, this);
-	WaterMaterialInstance->SetVectorParameterValue(FName(TEXT("Color")), SurfaceColor);
-	SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
 
 	RootComponent = SurfaceMesh;
 
+}
+
+void AOasisInteractiveWater::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	WaterMaterialInstance->SetVectorParameterValue(FName(TEXT("Color")), SurfaceColor);
+	SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
 	setOasisTexture();
-	//DampingFactor = 0.99f;
 }
 
 void AOasisInteractiveWater::setOasisTexture()
@@ -135,6 +139,15 @@ void AOasisInteractiveWater::addDisturbance(float x, float y, float radius, floa
 			}
 		}
 	}
+}
+
+float AOasisInteractiveWater::DistanceOfActorToThisMeshSurface(AActor* TargetActor, FVector& ClosestSurfacePoint) const
+{
+	if (!TargetActor) return NULL;
+	if (!TargetActor->IsValidLowLevel()) return NULL;
+
+	//Dist of Actor to Surface, retrieve closest Surface Point to Actor
+	return SurfaceMesh->GetDistanceToCollision(TargetActor->GetActorLocation(), ClosestSurfacePoint);
 }
 
 void AOasisInteractiveWater::setGridDimensions(int32 sizeX, int32 sizeY)
