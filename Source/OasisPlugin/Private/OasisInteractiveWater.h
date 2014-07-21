@@ -25,6 +25,7 @@ class AOasisInteractiveWater : public AActor
 	int ddyAt(int u, int v);
 	void setOasisTexture();
 	virtual void PostInitializeComponents() override;
+	FVector meshOrigin, meshExtent;
 
 public:
 	//TimeFactor should be >= 1.0f
@@ -39,6 +40,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		float DistanceOfActorToThisMeshSurface(AActor* TargetActor, FVector& ClosestSurfacePoint) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Oasis")
+		void WS2Texture(float InX, float InY, float &outX, float &outY);
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;

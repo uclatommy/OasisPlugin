@@ -30,6 +30,7 @@ void AOasisInteractiveWater::PostInitializeComponents()
 	WaterMaterialInstance->SetVectorParameterValue(FName(TEXT("Color")), SurfaceColor);
 	SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
 	setOasisTexture();
+	this->GetActorBounds(false, meshOrigin, meshExtent);
 }
 
 void AOasisInteractiveWater::setOasisTexture()
@@ -155,6 +156,21 @@ void AOasisInteractiveWater::setGridDimensions(int32 sizeX, int32 sizeY)
 	SizeX = sizeX;
 	SizeY = sizeY;
 	setOasisTexture();
+}
+
+void AOasisInteractiveWater::WS2Texture(float InXWS, float InYWS, float &outXTS, float &outYTS)
+{
+	//convert coordinate system to lower left corner as origin
+	float OriginX = meshOrigin.Component(0) - meshExtent.Component(0);
+	float OriginY = meshOrigin.Component(1) - meshExtent.Component(1);
+
+	//figure out relative location of the hit as a ratio for x and y
+	float hitX = (InXWS - OriginX) / (2 * meshExtent.Component(0));
+	float hitY = (InYWS - OriginY) / (2 * meshExtent.Component(1));
+
+	//use the ratio to convert the hit to texture coordinates
+	outXTS = hitX * SizeX;
+	outYTS = hitY * SizeY;
 }
 
 //index mapping helper functions
