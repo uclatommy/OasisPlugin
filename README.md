@@ -10,4 +10,4 @@ The goal is to learn Unreal Engine programming along with some common fluid dyna
   Probably too computationally intense for real-time, but can still be useful to generate precomputed animated meshes for cinematic sequences.
  
 ## Demo:
-<iframe src="https://player.vimeo.com/video/101274161" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> <p><a href="http://vimeo.com/101274161">Interactive Fluid Surface Update 1</a> from <a href="http://vimeo.com/user13023741">Thomas Chen</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
+<iframe src="http://player.vimeo.com/video/101274161" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
