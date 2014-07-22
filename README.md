@@ -9,5 +9,3 @@ The goal is to learn Unreal Engine programming along with some common fluid dyna
 - [ ] [Smooth Particle Hydrodynamics](https://software.intel.com/en-us/articles/fluid-simulation-for-video-games-part-15/)
   Probably too computationally intense for real-time, but can still be useful to generate precomputed animated meshes for cinematic sequences.
  
-## Demo:
-<iframe src="http://player.vimeo.com/video/101274161" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
