@@ -13,6 +13,7 @@ class AOasisInteractiveWater : public AActor
 	TArray<float> m_uv;									//height and velocity data
 	TArray<float> m_gradients;							//gradients to calc normals
 	UTexture2D *OasisWaterTexture;						//height data stored as texture: RGB->Normals, Alpha->Height
+	TArray<float> GroundHeight;
 	UMaterialInterface *MasterMaterialRef;				//reference to parameterized material template
 	UMaterialInstanceDynamic* WaterMaterialInstance;	//reference to parameterized material instance that will be used to manipulate vertex locations and normal map	
 
@@ -23,9 +24,10 @@ class AOasisInteractiveWater : public AActor
 	void CalculateGradients();
 	int ddxAt(int u, int v);
 	int ddyAt(int u, int v);
-	void setOasisTexture();
+	void ResetOasisTexture();
 	virtual void PostInitializeComponents() override;
 	FVector meshOrigin, meshExtent;
+	int GroundHeightAt(int u, int v);
 
 public:
 	//TimeFactor should be >= 1.0f
@@ -48,6 +50,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Oasis")
 		void WS2Texture(float InX, float InY, float &outX, float &outY);
 
+	UFUNCTION(BlueprintCallable, Category = "Oasis")
+		void SetGroundHeight(const UTexture2D *GroundHeightTexture);
+
 	//the fluid mesh
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Oasis")
 		TSubobjectPtr<UStaticMeshComponent> SurfaceMesh;
@@ -55,6 +60,9 @@ public:
 	//determines how long a wave lasts
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
 		float DampingFactor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Oasis")
+		float WaterHeight;
 	
 	//tells us when to redraw the texture
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Oasis")

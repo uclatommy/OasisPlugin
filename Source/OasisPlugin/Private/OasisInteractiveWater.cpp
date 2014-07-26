@@ -18,6 +18,7 @@ AOasisInteractiveWater::AOasisInteractiveWater(const class FPostConstructInitial
 	MasterMaterialRef = waterMaterial.Object;
 	SurfaceMesh->SetStaticMesh(waterMesh.Object);
 	WaterMaterialInstance = UMaterialInstanceDynamic::Create(MasterMaterialRef, this);
+	WaterHeight = 1.0f;
 
 	RootComponent = SurfaceMesh;
 
@@ -29,11 +30,11 @@ void AOasisInteractiveWater::PostInitializeComponents()
 
 	WaterMaterialInstance->SetVectorParameterValue(FName(TEXT("Color")), SurfaceColor);
 	SurfaceMesh->SetMaterial(0, WaterMaterialInstance);
-	setOasisTexture();
+	ResetOasisTexture();
 	this->GetActorBounds(false, meshOrigin, meshExtent);
 }
 
-void AOasisInteractiveWater::setOasisTexture()
+void AOasisInteractiveWater::ResetOasisTexture()
 {
 	TArray<float> new_uv;
 	TArray<float> new_gradients;
@@ -41,8 +42,8 @@ void AOasisInteractiveWater::setOasisTexture()
 	{
 		for (int i = 0; i < SizeX; i++)
 		{
-			new_uv.Add(0);			//this element will hold height at pixel (i,j)
-			new_uv.Add(0);			//this element will hold velocity at pixel (i,j)
+			new_uv.Add(0);				//this element will hold height at pixel (i,j)
+			new_uv.Add(0);				//this element will hold velocity at pixel (i,j)
 			new_gradients.Add(0);		//this element will hold dz/dx for (i,j)
 			new_gradients.Add(0);		//this element will hold dz/dy for (i,j)
 		}
@@ -53,7 +54,21 @@ void AOasisInteractiveWater::setOasisTexture()
 	OasisWaterTexture = UTexture2D::CreateTransient(SizeX, SizeY, PF_B8G8R8A8);
 	OasisWaterTexture->AddToRoot();
 	OasisWaterTexture->UpdateResource();
+
 	textureNeedsUpdate = true;
+}
+
+void AOasisInteractiveWater::SetGroundHeight(const UTexture2D *GroundHeightTexture)
+{
+	FColor *MipData = static_cast<FColor*>(GroundHeightTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
+	for (int j = 0; j < SizeY; j++)
+	{
+		for (int i = 0; i < SizeX; i++)
+		{
+			GroundHeight.Add(MipData[GroundHeightAt(i, j)].R/255.0f);
+		}
+	}
+	GroundHeightTexture->PlatformData->Mips[0].BulkData.Unlock();
 }
 
 void AOasisInteractiveWater::Tick(float DeltaSeconds)
@@ -82,24 +97,38 @@ void AOasisInteractiveWater::Tick(float DeltaSeconds)
 }
 
 // http://www.matthiasmueller.info/talks/GDC2008.pdf
-void AOasisInteractiveWater::Simulate(float TimeFactor) 
+void AOasisInteractiveWater::Simulate(float TimeFactor)
 {	
 	//generate a height field
 	for (int j = 1; j<SizeY - 1; j++) 
 	{
 		for (int i = 1; i<SizeX - 1; i++)
 		{ 
-			m_uv[VelocityAt(i, j)] += TimeFactor * (m_uv[HeightAt(i - 1, j)] + m_uv[HeightAt(i + 1, j)] + m_uv[HeightAt(i, j - 1)] + m_uv[HeightAt(i, j + 1)])*0.25f - m_uv[HeightAt(i, j)];
-		}
+//			if (GroundHeight[GroundHeightAt(i,j)]<WaterHeight)
+//			{
+				m_uv[VelocityAt(i, j)] += TimeFactor * (m_uv[HeightAt(i - 1, j)] + m_uv[HeightAt(i + 1, j)] + m_uv[HeightAt(i, j - 1)] + m_uv[HeightAt(i, j + 1)])*0.25f - m_uv[HeightAt(i, j)];
+//			}
+/*			else 
+			{
+				m_uv[VelocityAt(i, j)] = 0.0f;
+			}
+*/		}
 	}
 
 	for (int j = 1; j<SizeY - 1; j++)
 	{
 		for (int i = 1; i<SizeX - 1; i++)
 		{
-			float &v = m_uv[VelocityAt(i, j)];
-			v *= DampingFactor;
-			m_uv[HeightAt(i, j)] += TimeFactor*v;
+//			if (GroundHeight[GroundHeightAt(i, j)]<WaterHeight)
+//			{
+				float &v = m_uv[VelocityAt(i, j)];
+				v *= DampingFactor;
+				m_uv[HeightAt(i, j)] += TimeFactor*v;
+//			}
+//			else
+//			{
+//				m_uv[HeightAt(i, j)] = GroundHeight[GroundHeightAt(i, j)];
+//			}
 		}
 	}
 	
@@ -160,7 +189,7 @@ void AOasisInteractiveWater::setGridDimensions(int32 sizeX, int32 sizeY)
 {
 	SizeX = sizeX;
 	SizeY = sizeY;
-	setOasisTexture();
+	ResetOasisTexture();
 }
 
 void AOasisInteractiveWater::WS2Texture(float InXWS, float InYWS, float &outXTS, float &outYTS)
@@ -197,4 +226,9 @@ int AOasisInteractiveWater::ddxAt(int u, int v) //for m_gradients indices
 int AOasisInteractiveWater::ddyAt(int u, int v) //for m_gradient indices
 {
 	return VelocityAt(u, v);
+}
+
+int AOasisInteractiveWater::GroundHeightAt(int u, int v)
+{
+	return u + v*SizeX;
 }
